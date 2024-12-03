@@ -38,8 +38,8 @@
         <div id="pig"></div>
     </div>
     <script>
-        const SPREADSHEET_ID = "TU_SPREADSHEET_ID";
-        const API_KEY = "TU_API_KEY";
+        const SPREADSHEET_ID = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRnm5Is_2Za4GD-1UUWr8Nv6Aq_91JZNm3sJmPkrJLr30tfQBt4EhpR_dhjRc32CC2-zBbIODpi2j5O/pubhtml";
+        const API_KEY = "AIzaSyC2UclFHCAsVDCQj5I75t00KeaXLk4H-cU";
 
         function initialize() {
             gapi.client.init({
