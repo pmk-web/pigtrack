@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seguimiento de Limpieza</title>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        #canvas {
+            width: 90%;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            position: relative;
+        }
+        #pig {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: blue;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Seguimiento de Limpieza de Ductos</h1>
+    <div id="canvas">
+        <div id="pig"></div>
+    </div>
+    <script>
+        const SPREADSHEET_ID = "TU_SPREADSHEET_ID";
+        const API_KEY = "TU_API_KEY";
+
+        function initialize() {
+            gapi.client.init({
+                apiKey: API_KEY
+            }).then(() => {
+                return gapi.client.request({
+                    path: `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Limpieza!A2:J`
+                });
+            }).then(response => {
+                const data = response.result.values;
+                const today = new Date().toISOString().split('T')[0];
+                const currentLimpieza = data.find(row => row[5] === today); // Columna "Fecha_in"
+                if (currentLimpieza) {
+                    const ductoId = currentLimpieza[1]; // id_ducto
+                    fetchDuctoDetails(ductoId);
+                } else {
+                    document.body.innerHTML = "<p>No hay limpiezas programadas para hoy.</p>";
+                }
+            }).catch(error => {
+                console.error("Error al obtener datos de Google Sheets:", error);
+            });
+        }
+
+        function fetchDuctoDetails(ductoId) {
+            gapi.client.request({
+                path: `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/Ducto!A2:K`
+            }).then(response => {
+                const ductos = response.result.values;
+                const ducto = ductos.find(row => row[0] === ductoId);
+                if (ducto) {
+                    renderVisualization(ducto);
+                } else {
+                    document.body.innerHTML = "<p>No se encontraron detalles del ducto.</p>";
+                }
+            });
+        }
+
+        function renderVisualization(ducto) {
+            const canvas = document.getElementById("canvas");
+            const pig = document.getElementById("pig");
+            const totalLength = parseFloat(ducto[3]); // Longitud del ducto
+            const checkpoints = []; // Aquí se cargarían los checkpoints.
+
+            // Simula datos de prueba de los checkpoints
+            checkpoints.push({ progresiva: 0, time: "08:00:00" });
+            checkpoints.push({ progresiva: totalLength * 0.5, time: "10:00:00" });
+            checkpoints.push({ progresiva: totalLength, time: "12:00:00" });
+
+            // Dibuja la línea y actualiza el pig
+            canvas.style.height = "20px";
+            pig.style.top = "0px";
+            const interval = setInterval(() => {
+                const now = new Date().toLocaleTimeString('en-US', { hour12: false });
+                const currentCheckpoint = checkpoints.find(cp => cp.time === now);
+                if (currentCheckpoint) {
+                    const progress = (currentCheckpoint.progresiva / totalLength) * 100;
+                    pig.style.left = `${progress}%`;
+                }
+            }, 1000);
+        }
+
+        gapi.load("client", initialize);
+    </script>
+</body>
+</html>
