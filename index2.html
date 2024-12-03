@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datos de Limpieza de Ductos</title>
+    <script src="https://apis.google.com/js/api.js"></script>
+</head>
+<body>
+    <h1>Datos de Limpieza de Ductos</h1>
+
+    <div id="limpiezasHoyContainer">
+        <!-- Aquí se mostrarán las limpiezas de hoy -->
+    </div>
+
+    <script>
+        const apiKey = 'AIzaSyC2UclFHCAsVDCQj5I75t00KeaXLk4H-cU';  // Tu clave de API
+        const spreadsheetId = 'https://docs.google.com/spreadsheets/d/1xBffWOGJcT8vEbAnyt3LU4hlGhaFQ5E5KJEwbubiD_4/edit?gid=1753153938#gid=1753153938';  // El ID de tu hoja de cálculo
+
+        // Cargar la API de Google Sheets
+        function loadClient() {
+            gapi.client.init({
+                'apiKey': apiKey
+            }).then(function() {
+                listLimpiezasHoy();
+            });
+        }
+
+        function listLimpiezasHoy() {
+            const today = new Date();
+            const todayString = today.toISOString().split('T')[0]; // YYYY-MM-DD
+
+            // Acceder a los datos de la hoja "Limpieza"
+            gapi.client.request({
+                'path': `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/Limpieza`,
+                'method': 'GET'
+            }).then(function(response) {
+                const rows = response.result.values;
+                const limpiezasHoy = [];
+
+                if (rows.length) {
+                    // Filtrar las limpiezas que corresponden al día de hoy
+                    for (let i = 1; i < rows.length; i++) {
+                        const fechaIn = rows[i][4];  // Suponiendo que "Fecha_in" está en la columna 5 (índice 4)
+                        const fechaInString = fechaIn.split('T')[0]; // Solo la fecha, sin la hora
+
+                        if (fechaInString === todayString) {
+                            limpiezasHoy.push(rows[i]);
+                        }
+                    }
+
+                    // Mostrar las limpiezas de hoy en la página
+                    const container = document.getElementById('limpiezasHoyContainer');
+                    limpiezasHoy.forEach(limpieza => {
+                        const div = document.createElement("div");
+                        div.innerHTML = `
+                            <p>Limpieza: ${limpieza[0]}</p>
+                            <p>Fecha de inicio: ${limpieza[4]}</p>
+                            <p>Hora de pasada: ${limpieza[9] || "Pendiente"}</p>
+                        `;
+                        container.appendChild(div);
+                    });
+                }
+            });
+        }
+
+        // Iniciar el cliente de Google API
+        gapi.load('client', loadClient);
+    </script>
+</body>
+</html>
